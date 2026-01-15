@@ -1,10 +1,18 @@
 import { useMsal } from '@azure/msal-react';
 import { loginRequest, apiConfig } from '../authConfig';
+import { getFabricContext } from '../fabricContext';
 
 export const useApi = () => {
   const { instance, accounts } = useMsal();
 
   const getToken = async () => {
+    // Check if running in Fabric context
+    const fabricContext = getFabricContext();
+    if (fabricContext) {
+      return fabricContext.accessToken;
+    }
+
+    // Fallback to MSAL for standalone mode
     const request = {
       ...loginRequest,
       account: accounts[0],

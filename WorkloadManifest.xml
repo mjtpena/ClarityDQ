@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8"?>
+<WorkloadManifest xmlns="http://schemas.microsoft.com/fabric/workload/manifest/2023-10">
+  <Workload>
+    <Name>ClarityDQ</Name>
+    <DisplayName>ClarityDQ - Data Quality Guard</DisplayName>
+    <Description>Automated data quality management, comprehensive lineage tracking, and enterprise governance for Microsoft Fabric</Description>
+    <Version>1.0.0</Version>
+    <Publisher>
+      <Name>ClarityDQ Team</Name>
+      <Email>support@claritydq.com</Email>
+      <Url>https://claritydq.com</Url>
+    </Publisher>
+
+    <!-- Workload Entry Points -->
+    <FrontendEntryPoint>
+      <Url>https://claritydq-prod-web.azurestaticapps.net</Url>
+      <Type>Embedded</Type>
+    </FrontendEntryPoint>
+
+    <BackendEntryPoint>
+      <Url>https://claritydq-prod-api.azurecontainerapps.io</Url>
+      <Type>Container</Type>
+    </BackendEntryPoint>
+
+    <!-- Capabilities -->
+    <Capabilities>
+      <Capability>
+        <Name>DataProfiling</Name>
+        <DisplayName>Data Profiling</DisplayName>
+        <Description>Profile Lakehouse and Warehouse tables</Description>
+        <Icon>profiling.svg</Icon>
+      </Capability>
+      <Capability>
+        <Name>QualityRules</Name>
+        <DisplayName>Quality Rules</DisplayName>
+        <Description>Define and execute data quality rules</Description>
+        <Icon>rules.svg</Icon>
+      </Capability>
+      <Capability>
+        <Name>LineageTracking</Name>
+        <DisplayName>Lineage Tracking</DisplayName>
+        <Description>Track data lineage across workspaces</Description>
+        <Icon>lineage.svg</Icon>
+      </Capability>
+    </Capabilities>
+
+    <!-- Permissions Required -->
+    <Permissions>
+      <Permission>Workspace.Read.All</Permission>
+      <Permission>Lakehouse.Read.All</Permission>
+      <Permission>Warehouse.Read.All</Permission>
+      <Permission>Dataset.Read.All</Permission>
+      <Permission>Pipeline.Read.All</Permission>
+    </Permissions>
+
+    <!-- Supported Item Types -->
+    <SupportedItemTypes>
+      <ItemType>Lakehouse</ItemType>
+      <ItemType>Warehouse</ItemType>
+      <ItemType>Dataset</ItemType>
+      <ItemType>Pipeline</ItemType>
+    </SupportedItemTypes>
+
+    <!-- Navigation -->
+    <NavigationPanes>
+      <Pane>
+        <Id>quality-dashboard</Id>
+        <DisplayName>Quality Dashboard</DisplayName>
+        <Icon>dashboard.svg</Icon>
+        <Route>/dashboard</Route>
+      </Pane>
+      <Pane>
+        <Id>data-profiling</Id>
+        <DisplayName>Data Profiling</DisplayName>
+        <Icon>profiling.svg</Icon>
+        <Route>/profiling</Route>
+      </Pane>
+      <Pane>
+        <Id>lineage-viewer</Id>
+        <DisplayName>Lineage Viewer</DisplayName>
+        <Icon>lineage.svg</Icon>
+        <Route>/lineage</Route>
+      </Pane>
+      <Pane>
+        <Id>rules-management</Id>
+        <DisplayName>Rules</DisplayName>
+        <Icon>rules.svg</Icon>
+        <Route>/rules</Route>
+      </Pane>
+    </NavigationPanes>
+
+    <!-- Settings -->
+    <Settings>
+      <Setting>
+        <Key>EnableAutoRemediation</Key>
+        <DisplayName>Enable Auto-Remediation</DisplayName>
+        <Type>Boolean</Type>
+        <DefaultValue>false</DefaultValue>
+      </Setting>
+      <Setting>
+        <Key>AlertThreshold</Key>
+        <DisplayName>Alert Threshold (%)</DisplayName>
+        <Type>Number</Type>
+        <DefaultValue>90</DefaultValue>
+      </Setting>
+    </Settings>
+  </Workload>
+</WorkloadManifest>
