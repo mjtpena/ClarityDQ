@@ -9,6 +9,8 @@ public class ClarityDbContext : DbContext
 
     public DbSet<User> Users => Set<User>();
     public DbSet<DataProfile> DataProfiles => Set<DataProfile>();
+    public DbSet<Rule> Rules => Set<Rule>();
+    public DbSet<RuleExecution> RuleExecutions => Set<RuleExecution>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -30,6 +32,30 @@ public class ClarityDbContext : DbContext
             entity.Property(e => e.WorkspaceId).HasMaxLength(100).IsRequired();
             entity.Property(e => e.DatasetName).HasMaxLength(255).IsRequired();
             entity.Property(e => e.TableName).HasMaxLength(255).IsRequired();
+        });
+
+        modelBuilder.Entity<Rule>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => new { e.WorkspaceId, e.DatasetName, e.TableName });
+            entity.HasIndex(e => e.IsEnabled);
+            entity.Property(e => e.Name).HasMaxLength(255).IsRequired();
+            entity.Property(e => e.WorkspaceId).HasMaxLength(100).IsRequired();
+            entity.Property(e => e.DatasetName).HasMaxLength(255).IsRequired();
+            entity.Property(e => e.TableName).HasMaxLength(255).IsRequired();
+            entity.Property(e => e.ColumnName).HasMaxLength(255);
+            entity.Property(e => e.CreatedBy).HasMaxLength(255).IsRequired();
+        });
+
+        modelBuilder.Entity<RuleExecution>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => e.RuleId);
+            entity.HasIndex(e => e.ExecutedAt);
+            entity.HasOne(e => e.Rule)
+                .WithMany()
+                .HasForeignKey(e => e.RuleId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
     }
 }

@@ -18,6 +18,7 @@ builder.Services.AddDbContext<ClarityDbContext>(options =>
         sqlOptions => sqlOptions.EnableRetryOnFailure()));
 
 builder.Services.AddScoped<IProfilingService, ProfilingService>();
+builder.Services.AddScoped<IRuleService, RuleService>();
 
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
