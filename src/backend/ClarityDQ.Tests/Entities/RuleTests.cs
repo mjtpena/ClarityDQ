@@ -82,6 +82,50 @@ public class RuleTests
     }
 
     [Fact]
+    public void RuleExecution_CanHaveNullValues()
+    {
+        var execution = new RuleExecution
+        {
+            Id = Guid.NewGuid(),
+            RuleId = Guid.NewGuid(),
+            ExecutedAt = DateTime.UtcNow,
+            Status = RuleExecutionStatus.Pending,
+            ResultDetails = null,
+            ErrorMessage = null
+        };
+
+        execution.ResultDetails.Should().BeNull();
+        execution.ErrorMessage.Should().BeNull();
+    }
+
+    [Fact]
+    public void RuleExecution_CanSetRuleNavigation()
+    {
+        var rule = new Rule
+        {
+            Id = Guid.NewGuid(),
+            Name = "Test",
+            WorkspaceId = "ws",
+            DatasetName = "ds",
+            TableName = "t",
+            CreatedAt = DateTime.UtcNow,
+            CreatedBy = "user"
+        };
+
+        var execution = new RuleExecution
+        {
+            Id = Guid.NewGuid(),
+            RuleId = rule.Id,
+            Rule = rule,
+            ExecutedAt = DateTime.UtcNow,
+            Status = RuleExecutionStatus.Completed
+        };
+
+        execution.Rule.Should().NotBeNull();
+        execution.Rule!.Id.Should().Be(rule.Id);
+    }
+
+    [Fact]
     public void RuleExecutionStatus_AllValuesAreValid()
     {
         var statuses = new[]

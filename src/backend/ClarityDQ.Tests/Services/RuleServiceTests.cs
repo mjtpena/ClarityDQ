@@ -115,6 +115,24 @@ public class RuleServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task GetRulesAsync_FiltersDisabledRules()
+    {
+        var rules = new[]
+        {
+            new Rule { Id = Guid.NewGuid(), Name = "Rule 1", WorkspaceId = "ws-1", DatasetName = "ds", TableName = "t", IsEnabled = true, CreatedAt = DateTime.UtcNow, CreatedBy = "user" },
+            new Rule { Id = Guid.NewGuid(), Name = "Rule 2", WorkspaceId = "ws-1", DatasetName = "ds", TableName = "t", IsEnabled = false, CreatedAt = DateTime.UtcNow, CreatedBy = "user" },
+        };
+
+        _context.Rules.AddRange(rules);
+        await _context.SaveChangesAsync();
+
+        var result = await _service.GetRulesAsync("ws-1", enabledOnly: false);
+
+        result.Should().HaveCount(1);
+        result.First().IsEnabled.Should().BeFalse();
+    }
+
+    [Fact]
     public async Task UpdateRuleAsync_UpdatesRule()
     {
         var rule = new Rule
@@ -264,5 +282,45 @@ public class RuleServiceTests : IDisposable
     {
         _context.Database.EnsureDeleted();
         _context.Dispose();
+    }
+
+    [Fact]
+    public async Task ExecuteRuleAsync_HandlesAllRuleTypes()
+    {
+        var ruleTypes = new[]
+        {
+            RuleType.Completeness,
+            RuleType.Accuracy,
+            RuleType.Consistency,
+            RuleType.Uniqueness,
+            RuleType.Validity,
+            RuleType.Custom
+        };
+
+        foreach (var type in ruleTypes)
+        {
+            var rule = new Rule
+            {
+                Id = Guid.NewGuid(),
+                Name = $"Test {type}",
+                Type = type,
+                WorkspaceId = "ws-1",
+                DatasetName = "ds",
+                TableName = "t",
+                CreatedAt = DateTime.UtcNow,
+                CreatedBy = "user"
+            };
+
+            _context.Rules.Add(rule);
+            await _context.SaveChangesAsync();
+
+            var execution = await _service.ExecuteRuleAsync(rule.Id);
+            await Task.Delay(1500);
+
+            var result = await _context.RuleExecutions.FindAsync(execution.Id);
+            result.Should().NotBeNull();
+            result!.Status.Should().Be(RuleExecutionStatus.Completed);
+            result.RecordsFailed.Should().BeGreaterThan(0);
+        }
     }
 }
