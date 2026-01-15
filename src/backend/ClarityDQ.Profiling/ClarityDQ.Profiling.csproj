@@ -2,6 +2,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\ClarityDQ.Core\ClarityDQ.Core.csproj" />
+    <ProjectReference Include="..\ClarityDQ.Infrastructure\ClarityDQ.Infrastructure.csproj" />
   </ItemGroup>
 
   <PropertyGroup>
