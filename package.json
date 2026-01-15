@@ -1,0 +1,36 @@
+{
+  "name": "claritydq",
+  "version": "0.0.1",
+  "private": true,
+  "workspaces": [
+    "src/frontend"
+  ],
+  "scripts": {
+    "frontend:dev": "npm run dev --workspace=src/frontend",
+    "frontend:build": "npm run build --workspace=src/frontend",
+    "frontend:test": "npm run test --workspace=src/frontend",
+    "backend:build": "dotnet build src/backend/ClarityDQ.sln",
+    "backend:test": "dotnet test src/backend/ClarityDQ.sln",
+    "backend:run": "dotnet run --project src/backend/ClarityDQ.Api",
+    "lint": "npm run lint --workspaces",
+    "format": "npm run format --workspaces",
+    "test": "npm run test --workspaces && dotnet test src/backend/ClarityDQ.sln"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/[org]/ClarityDQ.git"
+  },
+  "keywords": [
+    "microsoft-fabric",
+    "data-quality",
+    "data-governance",
+    "lineage",
+    "data-profiling"
+  ],
+  "author": "ClarityDQ Team",
+  "license": "TBD",
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  }
+}
