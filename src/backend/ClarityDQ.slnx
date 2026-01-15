@@ -1,0 +1,7 @@
+<Solution>
+  <Project Path="ClarityDQ.Api/ClarityDQ.Api.csproj" />
+  <Project Path="ClarityDQ.Core/ClarityDQ.Core.csproj" />
+  <Project Path="ClarityDQ.Infrastructure/ClarityDQ.Infrastructure.csproj" />
+  <Project Path="ClarityDQ.Profiling/ClarityDQ.Profiling.csproj" />
+  <Project Path="ClarityDQ.Tests/ClarityDQ.Tests.csproj" />
+</Solution>

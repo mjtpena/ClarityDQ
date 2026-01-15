@@ -1,174 +1,73 @@
-# ClarityDQ Frontend
+# React + TypeScript + Vite
 
-React-based frontend application for ClarityDQ (Fabric Quality Guard).
+This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
-## Technology Stack
+Currently, two official plugins are available:
 
-- React 18+ with TypeScript
-- Fluent UI React v9 (Microsoft Design System)
-- Redux Toolkit for state management
-- React Query for API data fetching
-- D3.js/Cytoscape.js for lineage visualization
-- Recharts for quality metrics visualization
-- Vite for build tooling
+- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
+- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
 
-## Key Features
+## React Compiler
 
-### Quality Dashboard
-- Real-time quality score cards
-- Trend charts for quality metrics
-- Failed rules summary
-- Alert center
-- Quick actions
+The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
 
-### Rule Builder
-- Visual rule designer with drag-drop
-- Rule template library
-- SQL/Python expression editor with IntelliSense
-- Test rule functionality
-- Schedule configuration
+## Expanding the ESLint configuration
 
-### Lineage Viewer
-- Interactive graph visualization
-- Zoom, pan, and filter controls
-- Node details on hover/click
-- Path highlighting
-- Impact analysis mode
+If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
 
-### Data Catalog
-- Searchable table/column browser
-- Metadata editor
-- Tag management
-- Business glossary integration
+```js
+export default defineConfig([
+  globalIgnores(['dist']),
+  {
+    files: ['**/*.{ts,tsx}'],
+    extends: [
+      // Other configs...
 
-### Governance Console
-- Policy management
-- Compliance dashboards
-- Audit logs
-- User access controls
+      // Remove tseslint.configs.recommended and replace with this
+      tseslint.configs.recommendedTypeChecked,
+      // Alternatively, use this for stricter rules
+      tseslint.configs.strictTypeChecked,
+      // Optionally, add this for stylistic rules
+      tseslint.configs.stylisticTypeChecked,
 
-## Getting Started
-
-### Prerequisites
-- Node.js 18+
-- npm 9+
-
-### Installation
-
-```bash
-cd src/frontend
-npm install
-```
-
-### Development
-
-```bash
-npm run dev
-```
-
-### Build
-
-```bash
-npm run build
-```
-
-### Test
-
-```bash
-npm run test
-```
-
-## Project Structure
-
-```
-frontend/
-├── public/              # Static assets
-├── src/
-│   ├── components/      # React components
-│   ├── services/        # API clients
-│   ├── hooks/           # Custom hooks
-│   ├── utils/           # Utilities
-│   ├── store/           # Redux store
-│   └── types/           # TypeScript types
-├── package.json
-└── vite.config.ts
-```
-
-## Component Development
-
-Components follow Fluent UI design patterns and are organized by feature area.
-
-### Example Component Structure
-
-```typescript
-// components/quality/QualityScoreCard.tsx
-import { Card } from '@fluentui/react-components';
-import { useQualityScore } from '../../hooks/useQualityScore';
-
-export const QualityScoreCard = ({ tableId }: { tableId: string }) => {
-  const { score, loading } = useQualityScore(tableId);
-  
-  return (
-    <Card>
-      {/* Component implementation */}
-    </Card>
-  );
-};
-```
-
-## API Integration
-
-API calls are centralized in the `services/` directory:
-
-```typescript
-// services/qualityApi.ts
-export const qualityApi = {
-  createRule: async (rule: QualityRule) => {
-    // Implementation
+      // Other configs...
+    ],
+    languageOptions: {
+      parserOptions: {
+        project: ['./tsconfig.node.json', './tsconfig.app.json'],
+        tsconfigRootDir: import.meta.dirname,
+      },
+      // other options...
+    },
   },
-  executeRule: async (ruleId: string) => {
-    // Implementation
-  }
-};
+])
 ```
 
-## State Management
+You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
 
-Redux Toolkit is used for global state:
+```js
+// eslint.config.js
+import reactX from 'eslint-plugin-react-x'
+import reactDom from 'eslint-plugin-react-dom'
 
-```typescript
-// store/slices/qualitySlice.ts
-export const qualitySlice = createSlice({
-  name: 'quality',
-  initialState,
-  reducers: {
-    // Reducers
-  }
-});
+export default defineConfig([
+  globalIgnores(['dist']),
+  {
+    files: ['**/*.{ts,tsx}'],
+    extends: [
+      // Other configs...
+      // Enable lint rules for React
+      reactX.configs['recommended-typescript'],
+      // Enable lint rules for React DOM
+      reactDom.configs.recommended,
+    ],
+    languageOptions: {
+      parserOptions: {
+        project: ['./tsconfig.node.json', './tsconfig.app.json'],
+        tsconfigRootDir: import.meta.dirname,
+      },
+      // other options...
+    },
+  },
+])
 ```
-
-## Styling
-
-Use Fluent UI tokens for consistent theming:
-
-```typescript
-import { tokens } from '@fluentui/react-components';
-
-const styles = {
-  container: {
-    backgroundColor: tokens.colorNeutralBackground1,
-    padding: tokens.spacingVerticalM
-  }
-};
-```
-
-## Testing
-
-- Unit tests with Jest and React Testing Library
-- Component tests for UI components
-- Hook tests for custom hooks
-- Integration tests for API services
-
-## Contributing
-
-See [CONTRIBUTING.md](../../CONTRIBUTING.md) for guidelines.

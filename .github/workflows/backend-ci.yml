@@ -1,0 +1,40 @@
+name: Backend CI
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'src/backend/**'
+      - '.github/workflows/backend-ci.yml'
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'src/backend/**'
+      - '.github/workflows/backend-ci.yml'
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      
+      - name: Restore dependencies
+        run: dotnet restore src/backend/ClarityDQ.sln
+      
+      - name: Build
+        run: dotnet build src/backend/ClarityDQ.sln --configuration Release --no-restore
+      
+      - name: Test
+        run: dotnet test src/backend/ClarityDQ.sln --configuration Release --no-build --verbosity normal --collect:"XPlat Code Coverage"
+      
+      - name: Upload coverage
+        uses: codecov/codecov-action@v3
+        with:
+          directory: ./src/backend/**/TestResults
+          flags: backend

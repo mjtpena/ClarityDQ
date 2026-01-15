@@ -1,0 +1,59 @@
+name: ML Service CI
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'src/ml-service/**'
+      - '.github/workflows/ml-service-ci.yml'
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'src/ml-service/**'
+      - '.github/workflows/ml-service-ci.yml'
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        python-version: ['3.11', '3.12']
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          cd src/ml-service
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -r requirements-dev.txt
+      
+      - name: Lint with ruff
+        run: |
+          cd src/ml-service
+          ruff check .
+      
+      - name: Type check with mypy
+        run: |
+          cd src/ml-service
+          mypy .
+      
+      - name: Test with pytest
+        run: |
+          cd src/ml-service
+          pytest --cov=. --cov-report=xml
+      
+      - name: Upload coverage
+        if: matrix.python-version == '3.12'
+        uses: codecov/codecov-action@v3
+        with:
+          directory: ./src/ml-service
+          flags: ml-service
