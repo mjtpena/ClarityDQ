@@ -13,6 +13,8 @@ public class ClarityDbContext : DbContext
     public DbSet<RuleExecution> RuleExecutions => Set<RuleExecution>();
     public DbSet<Schedule> Schedules => Set<Schedule>();
     public DbSet<ScheduleExecution> ScheduleExecutions => Set<ScheduleExecution>();
+    public DbSet<LineageNode> LineageNodes => Set<LineageNode>();
+    public DbSet<LineageEdge> LineageEdges => Set<LineageEdge>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -58,6 +60,36 @@ public class ClarityDbContext : DbContext
                 .WithMany()
                 .HasForeignKey(e => e.RuleId)
                 .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<LineageNode>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => new { e.WorkspaceId, e.NodeType });
+            entity.HasIndex(e => new { e.DatasetName, e.TableName });
+            entity.Property(e => e.WorkspaceId).HasMaxLength(100).IsRequired();
+            entity.Property(e => e.NodeName).HasMaxLength(500).IsRequired();
+            entity.Property(e => e.DatasetName).HasMaxLength(255);
+            entity.Property(e => e.TableName).HasMaxLength(255);
+            entity.Property(e => e.ColumnName).HasMaxLength(255);
+            entity.Ignore(e => e.Metadata);
+        });
+
+        modelBuilder.Entity<LineageEdge>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => e.SourceNodeId);
+            entity.HasIndex(e => e.TargetNodeId);
+            entity.Property(e => e.TransformationType).HasMaxLength(100).IsRequired();
+            entity.Ignore(e => e.Metadata);
+            entity.HasOne(e => e.SourceNode)
+                .WithMany()
+                .HasForeignKey(e => e.SourceNodeId)
+                .OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(e => e.TargetNode)
+                .WithMany()
+                .HasForeignKey(e => e.TargetNodeId)
+                .OnDelete(DeleteBehavior.Restrict);
         });
     }
 }
