@@ -13,6 +13,8 @@
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
     <PackageReference Include="FluentAssertions" Version="8.8.0" />
+    <PackageReference Include="Hangfire.AspNetCore" Version="1.8.22" />
+    <PackageReference Include="Microsoft.AspNetCore.Http" Version="2.2.2" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="10.0.2" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
     <PackageReference Include="Moq" Version="4.20.72" />
@@ -29,6 +31,7 @@
     <ProjectReference Include="..\ClarityDQ.Core\ClarityDQ.Core.csproj" />
     <ProjectReference Include="..\ClarityDQ.Profiling\ClarityDQ.Profiling.csproj" />
     <ProjectReference Include="..\ClarityDQ.RuleEngine\ClarityDQ.RuleEngine.csproj" />
+    <ProjectReference Include="..\ClarityDQ.OneLake\ClarityDQ.OneLake.csproj" />
   </ItemGroup>
 
 </Project>
