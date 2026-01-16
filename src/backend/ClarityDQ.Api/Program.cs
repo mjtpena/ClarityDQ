@@ -19,6 +19,7 @@ builder.Services.AddDbContext<ClarityDbContext>(options =>
 
 builder.Services.AddScoped<IProfilingService, ProfilingService>();
 builder.Services.AddScoped<IRuleService, RuleService>();
+builder.Services.AddScoped<ISchedulingService, SchedulingService>();
 
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();

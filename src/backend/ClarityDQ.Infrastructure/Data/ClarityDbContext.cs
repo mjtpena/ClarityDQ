@@ -11,6 +11,8 @@ public class ClarityDbContext : DbContext
     public DbSet<DataProfile> DataProfiles => Set<DataProfile>();
     public DbSet<Rule> Rules => Set<Rule>();
     public DbSet<RuleExecution> RuleExecutions => Set<RuleExecution>();
+    public DbSet<Schedule> Schedules => Set<Schedule>();
+    public DbSet<ScheduleExecution> ScheduleExecutions => Set<ScheduleExecution>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
