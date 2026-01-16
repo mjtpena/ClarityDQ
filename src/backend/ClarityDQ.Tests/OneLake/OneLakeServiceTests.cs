@@ -1,6 +1,7 @@
 using ClarityDQ.Core.Entities;
 using ClarityDQ.OneLake;
 using Moq;
+using FluentAssertions;
 
 namespace ClarityDQ.Tests.OneLake;
 
@@ -91,7 +92,7 @@ public class OneLakeServiceTests
 
         var results = await _oneLakeServiceMock.Object.ReadProfilingResultsAsync(workspaceId, datasetName);
 
-        Assert.Equal(2, results.Count);
+        results.Should().HaveCount(2);
         _oneLakeServiceMock.Verify(x => x.ReadProfilingResultsAsync(workspaceId, datasetName, null, It.IsAny<CancellationToken>()), Times.Once);
     }
 

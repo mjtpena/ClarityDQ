@@ -9,12 +9,16 @@
     "frontend:dev": "npm run dev --workspace=src/frontend",
     "frontend:build": "npm run build --workspace=src/frontend",
     "frontend:test": "npm run test --workspace=src/frontend",
+    "frontend:test:coverage": "npm run test:coverage --workspace=src/frontend",
     "backend:build": "dotnet build src/backend/ClarityDQ.sln",
     "backend:test": "dotnet test src/backend/ClarityDQ.sln",
+    "backend:test:coverage": "dotnet test src/backend/ClarityDQ.sln /p:CollectCoverage=true /p:CoverletOutputFormat=opencover",
     "backend:run": "dotnet run --project src/backend/ClarityDQ.Api",
+    "test": "npm run test --workspaces && dotnet test src/backend/ClarityDQ.sln",
+    "test:coverage": "npm run frontend:test:coverage && npm run backend:test:coverage",
+    "test:e2e": "playwright test",
     "lint": "npm run lint --workspaces",
-    "format": "npm run format --workspaces",
-    "test": "npm run test --workspaces && dotnet test src/backend/ClarityDQ.sln"
+    "format": "npm run format --workspaces"
   },
   "repository": {
     "type": "git",

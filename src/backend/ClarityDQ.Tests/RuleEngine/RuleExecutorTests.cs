@@ -378,4 +378,139 @@ public class RuleExecutorTests
             result.Should().NotBeNull();
         }
     }
+
+    [Fact]
+    public async Task ExecuteValidityRule_WithLengthGreaterThan()
+    {
+        var rule = new Rule
+        {
+            Type = RuleType.Validity,
+            WorkspaceId = "ws",
+            DatasetName = "ds",
+            TableName = "t",
+            ColumnName = "Name",
+            Expression = "length:>5"
+        };
+
+        var result = await _executor.ExecuteAsync(rule, _dataSource);
+        result.RecordsChecked.Should().BeGreaterThan(0);
+    }
+
+    [Fact]
+    public async Task ExecuteValidityRule_WithLengthLessThan()
+    {
+        var rule = new Rule
+        {
+            Type = RuleType.Validity,
+            WorkspaceId = "ws",
+            DatasetName = "ds",
+            TableName = "t",
+            ColumnName = "Name",
+            Expression = "length:<20"
+        };
+
+        var result = await _executor.ExecuteAsync(rule, _dataSource);
+        result.RecordsChecked.Should().BeGreaterThan(0);
+    }
+
+    [Fact]
+    public async Task ExecuteValidityRule_WithLengthGreaterThanOrEqual()
+    {
+        var rule = new Rule
+        {
+            Type = RuleType.Validity,
+            WorkspaceId = "ws",
+            DatasetName = "ds",
+            TableName = "t",
+            ColumnName = "Name",
+            Expression = "length:>=5"
+        };
+
+        var result = await _executor.ExecuteAsync(rule, _dataSource);
+        result.RecordsChecked.Should().BeGreaterThan(0);
+    }
+
+    [Fact]
+    public async Task ExecuteValidityRule_WithLengthLessThanOrEqual()
+    {
+        var rule = new Rule
+        {
+            Type = RuleType.Validity,
+            WorkspaceId = "ws",
+            DatasetName = "ds",
+            TableName = "t",
+            ColumnName = "Name",
+            Expression = "length:<=15"
+        };
+
+        var result = await _executor.ExecuteAsync(rule, _dataSource);
+        result.RecordsChecked.Should().BeGreaterThan(0);
+    }
+
+    [Fact]
+    public async Task ExecuteValidityRule_WithLengthExact()
+    {
+        var rule = new Rule
+        {
+            Type = RuleType.Validity,
+            WorkspaceId = "ws",
+            DatasetName = "ds",
+            TableName = "t",
+            ColumnName = "Id",
+            Expression = "length:5"
+        };
+
+        var result = await _executor.ExecuteAsync(rule, _dataSource);
+        result.RecordsChecked.Should().BeGreaterThan(0);
+    }
+
+    [Fact]
+    public async Task ExecuteValidityRule_WithDoubleRange()
+    {
+        var rule = new Rule
+        {
+            Type = RuleType.Validity,
+            WorkspaceId = "ws",
+            DatasetName = "ds",
+            TableName = "t",
+            ColumnName = "Score",
+            Expression = "range:0.0,100.0"
+        };
+
+        var result = await _executor.ExecuteAsync(rule, _dataSource);
+        result.RecordsChecked.Should().BeGreaterThan(0);
+    }
+
+    [Fact]
+    public async Task ExecuteCompletenessRule_WithThresholdViolation()
+    {
+        var rule = new Rule
+        {
+            Type = RuleType.Completeness,
+            WorkspaceId = "ws",
+            DatasetName = "ds",
+            TableName = "t",
+            ColumnName = "",
+            Threshold = 99.0
+        };
+
+        var result = await _executor.ExecuteAsync(rule, _dataSource);
+        result.Should().NotBeNull();
+    }
+
+    [Fact]
+    public async Task ExecuteUniquenessRule_WithMultipleDuplicates()
+    {
+        var rule = new Rule
+        {
+            Type = RuleType.Uniqueness,
+            WorkspaceId = "ws",
+            DatasetName = "ds",
+            TableName = "t-duplicates",
+            ColumnName = "Status"
+        };
+
+        var result = await _executor.ExecuteAsync(rule, _dataSource);
+        result.Should().NotBeNull();
+    }
 }

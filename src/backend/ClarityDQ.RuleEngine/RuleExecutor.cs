@@ -213,10 +213,10 @@ public class RuleExecutor : IRuleExecutor
 
     private bool ParseLengthRule(string expr, int length)
     {
-        if (expr.StartsWith(">")) return length > int.Parse(expr[1..]);
-        if (expr.StartsWith("<")) return length < int.Parse(expr[1..]);
         if (expr.StartsWith(">=")) return length >= int.Parse(expr[2..]);
         if (expr.StartsWith("<=")) return length <= int.Parse(expr[2..]);
+        if (expr.StartsWith(">")) return length > int.Parse(expr[1..]);
+        if (expr.StartsWith("<")) return length < int.Parse(expr[1..]);
         return length == int.Parse(expr);
     }
 
