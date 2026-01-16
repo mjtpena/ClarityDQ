@@ -14,6 +14,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\ClarityDQ.Core\ClarityDQ.Core.csproj" />
+    <ProjectReference Include="..\ClarityDQ.RuleEngine\ClarityDQ.RuleEngine.csproj" />
   </ItemGroup>
 
 </Project>
