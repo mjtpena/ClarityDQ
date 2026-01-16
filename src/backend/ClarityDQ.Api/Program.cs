@@ -71,6 +71,18 @@ builder.Services.AddScoped<IRuleExecutor, RuleExecutor>();
 builder.Services.AddScoped<IRuleDataSource, MockRuleDataSource>();
 builder.Services.AddScoped<ScheduledJobProcessor>();
 
+builder.Services.AddScoped<ClarityDQ.FabricClient.IFabricClient>(sp =>
+{
+    var options = new ClarityDQ.FabricClient.FabricClientOptions
+    {
+        TenantId = builder.Configuration["Fabric:TenantId"] ?? "",
+        ClientId = builder.Configuration["Fabric:ClientId"] ?? "",
+        ClientSecret = builder.Configuration["Fabric:ClientSecret"] ?? "",
+        FabricApiBaseUrl = builder.Configuration["Fabric:ApiBaseUrl"] ?? "https://api.fabric.microsoft.com/v1"
+    };
+    return new ClarityDQ.FabricClient.FabricClient(new HttpClient(), options);
+});
+
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 

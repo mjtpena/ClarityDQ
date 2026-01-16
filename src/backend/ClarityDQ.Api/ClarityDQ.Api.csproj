@@ -30,6 +30,7 @@
     <ProjectReference Include="..\ClarityDQ.Profiling\ClarityDQ.Profiling.csproj" />
     <ProjectReference Include="..\ClarityDQ.Lineage\ClarityDQ.Lineage.csproj" />
     <ProjectReference Include="..\ClarityDQ.RuleEngine\ClarityDQ.RuleEngine.csproj" />
+    <ProjectReference Include="..\ClarityDQ.FabricClient\ClarityDQ.FabricClient.csproj" />
   </ItemGroup>
 
 </Project>
