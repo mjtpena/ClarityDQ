@@ -379,4 +379,69 @@ public class SchedulingServiceTests : IDisposable
 
         Assert.NotNull(result.NextRunAt);
     }
+
+    [Fact]
+    public async Task GetSchedulesAsync_WithEnabledOnly_FiltersCorrectly()
+    {
+        var enabledSchedule = new Schedule
+        {
+            Id = Guid.NewGuid(),
+            Name = "Enabled",
+            CronExpression = "0 0 * * *",
+            IsEnabled = true
+        };
+        var disabledSchedule = new Schedule
+        {
+            Id = Guid.NewGuid(),
+            Name = "Disabled",
+            CronExpression = "0 0 * * *",
+            IsEnabled = false
+        };
+        _context.Schedules.AddRange(enabledSchedule, disabledSchedule);
+        await _context.SaveChangesAsync();
+
+        var results = await _service.GetSchedulesAsync(enabledOnly: true);
+
+        Assert.Single(results);
+        Assert.All(results, s => Assert.True(s.IsEnabled));
+    }
+
+    [Fact]
+    public async Task GetSchedulesAsync_WithoutFilter_ReturnsAll()
+    {
+        var schedule1 = new Schedule { Id = Guid.NewGuid(), Name = "S1", CronExpression = "0 0 * * *", IsEnabled = true };
+        var schedule2 = new Schedule { Id = Guid.NewGuid(), Name = "S2", CronExpression = "0 0 * * *", IsEnabled = false };
+        _context.Schedules.AddRange(schedule1, schedule2);
+        await _context.SaveChangesAsync();
+
+        var results = await _service.GetSchedulesAsync();
+
+        Assert.Equal(2, results.Count);
+    }
+
+    [Fact]
+    public async Task DeleteScheduleAsync_WithNonExistent_DoesNotThrow()
+    {
+        await _service.DeleteScheduleAsync(Guid.NewGuid());
+        
+        Assert.True(true);
+    }
+
+    [Fact]
+    public async Task CreateScheduleAsync_WithInvalidCron_SetsNullNextRun()
+    {
+        var schedule = new Schedule
+        {
+            Name = "Invalid Cron",
+            CronExpression = "invalid cron expression",
+            Type = ScheduleType.DataProfiling,
+            WorkspaceId = "ws",
+            DatasetName = "ds",
+            TableName = "t"
+        };
+
+        var result = await _service.CreateScheduleAsync(schedule);
+
+        Assert.Null(result.NextRunAt);
+    }
 }

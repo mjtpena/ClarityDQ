@@ -153,6 +153,54 @@ public class ProfilingServiceTests : IDisposable
         profile.ProfileData.Should().NotBeNullOrEmpty();
     }
 
+    [Fact]
+    public async Task GetProfilesAsync_WithPagination_ReturnsCorrectPage()
+    {
+        // Arrange
+        for (int i = 0; i < 10; i++)
+        {
+            var profile = new DataProfile
+            {
+                Id = Guid.NewGuid(),
+                WorkspaceId = "ws1",
+                DatasetName = "ds1",
+                TableName = $"t{i}",
+                ProfiledAt = DateTime.UtcNow.AddHours(-i),
+                Status = ProfileStatus.Completed,
+                RowCount = 100,
+                ColumnCount = 5,
+                ProfileData = "{}"
+            };
+            _context.DataProfiles.Add(profile);
+        }
+        await _context.SaveChangesAsync();
+
+        // Act
+        var page1 = await _service.GetProfilesAsync("ws1", skip: 0, take: 5);
+        var page2 = await _service.GetProfilesAsync("ws1", skip: 5, take: 5);
+
+        // Assert
+        page1.Should().HaveCount(5);
+        page2.Should().HaveCount(5);
+        page1.Should().NotIntersectWith(page2);
+    }
+
+    [Fact]
+    public async Task GetProfileAsync_WithValidId_ReturnsProfile()
+    {
+        // Arrange
+        var profile = new DataProfile { Id = Guid.NewGuid(), WorkspaceId = "ws1", DatasetName = "ds1", TableName = "table1", ProfiledAt = DateTime.UtcNow, Status = ProfileStatus.Completed, RowCount = 100, ColumnCount = 5, ProfileData = "{}" };
+        _context.DataProfiles.Add(profile);
+        await _context.SaveChangesAsync();
+
+        // Act
+        var result = await _service.GetProfileAsync(profile.Id);
+
+        // Assert
+        result.Should().NotBeNull();
+        result!.Id.Should().Be(profile.Id);
+    }
+
     public void Dispose()
     {
         _context.Database.EnsureDeleted();

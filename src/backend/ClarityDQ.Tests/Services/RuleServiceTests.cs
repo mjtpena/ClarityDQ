@@ -312,4 +312,47 @@ public class RuleServiceTests : IDisposable
             result.RecordsChecked.Should().BeGreaterThan(0);
         }
     }
+
+    [Fact]
+    public async Task GetRulesAsync_WithEnabledFilter_ReturnsFilteredRules()
+    {
+        var rule1 = new Rule { Id = Guid.NewGuid(), Name = "R1", Type = RuleType.Completeness, WorkspaceId = "ws", DatasetName = "ds", TableName = "t", ColumnName = "c", IsEnabled = true, CreatedAt = DateTime.UtcNow, CreatedBy = "user" };
+        var rule2 = new Rule { Id = Guid.NewGuid(), Name = "R2", Type = RuleType.Uniqueness, WorkspaceId = "ws", DatasetName = "ds", TableName = "t", ColumnName = "c", IsEnabled = false, CreatedAt = DateTime.UtcNow, CreatedBy = "user" };
+        _context.Rules.AddRange(rule1, rule2);
+        await _context.SaveChangesAsync();
+
+        var results = await _service.GetRulesAsync("ws", enabledOnly: true);
+
+        results.Should().HaveCount(1);
+        results.First().IsEnabled.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task DeleteRuleAsync_WithNonExistent_DoesNotThrow()
+    {
+        await _service.DeleteRuleAsync(Guid.NewGuid());
+        
+        Assert.True(true);
+    }
+
+    [Fact]
+    public async Task GetRuleExecutionsAsync_WithPagination_ReturnsCorrectPage()
+    {
+        var rule = new Rule { Id = Guid.NewGuid(), Name = "R", Type = RuleType.Completeness, WorkspaceId = "ws", DatasetName = "ds", TableName = "t", ColumnName = "c", CreatedAt = DateTime.UtcNow, CreatedBy = "user" };
+        _context.Rules.Add(rule);
+        await _context.SaveChangesAsync();
+
+        for (int i = 0; i < 10; i++)
+        {
+            _context.RuleExecutions.Add(new RuleExecution { Id = Guid.NewGuid(), RuleId = rule.Id, ExecutedAt = DateTime.UtcNow.AddMinutes(-i), Status = RuleExecutionStatus.Completed, RecordsPassed = 100, RecordsFailed = 0 });
+        }
+        await _context.SaveChangesAsync();
+
+        var page1 = await _service.GetRuleExecutionsAsync(rule.Id, skip: 0, take: 5);
+        var page2 = await _service.GetRuleExecutionsAsync(rule.Id, skip: 5, take: 5);
+
+        page1.Should().HaveCount(5);
+        page2.Should().HaveCount(5);
+        page1.Should().NotIntersectWith(page2);
+    }
 }
