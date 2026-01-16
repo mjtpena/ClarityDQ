@@ -7,6 +7,12 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'jsdom',
+    setupFiles: ['./src/test/setup.ts'],
+    environmentOptions: {
+      jsdom: {
+        url: 'http://localhost',
+      },
+    },
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html', 'lcov'],
@@ -17,7 +23,11 @@ export default defineConfig({
         '**/*.config.*',
         '**/mockData',
         '**/*.test.{ts,tsx}',
+        'src/test/',
       ],
     },
+  },
+  define: {
+    'process.env.NODE_ENV': '"test"',
   },
 })
