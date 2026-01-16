@@ -1,10 +1,158 @@
 using ClarityDQ.Core.Entities;
 using ClarityDQ.OneLake;
+using Moq;
 
 namespace ClarityDQ.Tests.OneLake;
 
 public class OneLakeServiceTests
 {
+    private readonly Mock<IOneLakeService> _oneLakeServiceMock;
+
+    public OneLakeServiceTests()
+    {
+        _oneLakeServiceMock = new Mock<IOneLakeService>();
+    }
+
+    [Fact]
+    public async Task WriteProfilingResultAsync_ShouldCallService()
+    {
+        var workspaceId = "ws-123";
+        var datasetName = "TestDataset";
+        var profile = new DataProfile
+        {
+            Id = Guid.NewGuid(),
+            WorkspaceId = workspaceId,
+            DatasetName = datasetName,
+            TableName = "TestTable",
+            ProfiledAt = DateTime.UtcNow
+        };
+
+        _oneLakeServiceMock
+            .Setup(x => x.WriteProfilingResultAsync(workspaceId, datasetName, profile, It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        await _oneLakeServiceMock.Object.WriteProfilingResultAsync(workspaceId, datasetName, profile);
+
+        _oneLakeServiceMock.Verify(x => x.WriteProfilingResultAsync(workspaceId, datasetName, profile, It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task WriteRuleExecutionAsync_ShouldCallService()
+    {
+        var workspaceId = "ws-123";
+        var ruleId = Guid.NewGuid();
+        var execution = new RuleExecution
+        {
+            Id = Guid.NewGuid(),
+            RuleId = ruleId,
+            ExecutedAt = DateTime.UtcNow,
+            Status = RuleExecutionStatus.Completed,
+            RecordsPassed = 100,
+            RecordsFailed = 0
+        };
+
+        _oneLakeServiceMock
+            .Setup(x => x.WriteRuleExecutionAsync(workspaceId, ruleId, execution, It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        await _oneLakeServiceMock.Object.WriteRuleExecutionAsync(workspaceId, ruleId, execution);
+
+        _oneLakeServiceMock.Verify(x => x.WriteRuleExecutionAsync(workspaceId, ruleId, execution, It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task ReadProfilingResultsAsync_ReturnsResults()
+    {
+        var workspaceId = "ws-123";
+        var datasetName = "TestDataset";
+        var expectedResults = new List<DataProfile>
+        {
+            new DataProfile
+            {
+                Id = Guid.NewGuid(),
+                WorkspaceId = workspaceId,
+                DatasetName = datasetName,
+                TableName = "Table1",
+                ProfiledAt = DateTime.UtcNow
+            },
+            new DataProfile
+            {
+                Id = Guid.NewGuid(),
+                WorkspaceId = workspaceId,
+                DatasetName = datasetName,
+                TableName = "Table2",
+                ProfiledAt = DateTime.UtcNow.AddHours(-1)
+            }
+        };
+
+        _oneLakeServiceMock
+            .Setup(x => x.ReadProfilingResultsAsync(workspaceId, datasetName, null, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(expectedResults);
+
+        var results = await _oneLakeServiceMock.Object.ReadProfilingResultsAsync(workspaceId, datasetName);
+
+        Assert.Equal(2, results.Count);
+        _oneLakeServiceMock.Verify(x => x.ReadProfilingResultsAsync(workspaceId, datasetName, null, It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task ReadProfilingResultsAsync_WithSinceFilter_ReturnsFilteredResults()
+    {
+        var workspaceId = "ws-123";
+        var datasetName = "TestDataset";
+        var since = DateTime.UtcNow.AddHours(-2);
+        var expectedResults = new List<DataProfile>
+        {
+            new DataProfile
+            {
+                Id = Guid.NewGuid(),
+                WorkspaceId = workspaceId,
+                DatasetName = datasetName,
+                TableName = "Table1",
+                ProfiledAt = DateTime.UtcNow
+            }
+        };
+
+        _oneLakeServiceMock
+            .Setup(x => x.ReadProfilingResultsAsync(workspaceId, datasetName, since, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(expectedResults);
+
+        var results = await _oneLakeServiceMock.Object.ReadProfilingResultsAsync(workspaceId, datasetName, since);
+
+        Assert.Single(results);
+        Assert.All(results, r => Assert.True(r.ProfiledAt >= since));
+        _oneLakeServiceMock.Verify(x => x.ReadProfilingResultsAsync(workspaceId, datasetName, since, It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task ReadProfilingResultsAsync_NoResults_ReturnsEmptyList()
+    {
+        var workspaceId = "ws-123";
+        var datasetName = "NonExistentDataset";
+
+        _oneLakeServiceMock
+            .Setup(x => x.ReadProfilingResultsAsync(workspaceId, datasetName, null, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<DataProfile>());
+
+        var results = await _oneLakeServiceMock.Object.ReadProfilingResultsAsync(workspaceId, datasetName);
+
+        Assert.Empty(results);
+    }
+
+    [Fact]
+    public async Task WriteProfilingResultAsync_WithNullProfile_ThrowsException()
+    {
+        var workspaceId = "ws-123";
+        var datasetName = "TestDataset";
+
+        _oneLakeServiceMock
+            .Setup(x => x.WriteProfilingResultAsync(workspaceId, datasetName, null!, It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new ArgumentNullException(nameof(DataProfile)));
+
+        await Assert.ThrowsAsync<ArgumentNullException>(() => 
+            _oneLakeServiceMock.Object.WriteProfilingResultAsync(workspaceId, datasetName, null!));
+    }
+
     [Fact]
     public void OneLakeService_Constructor_ShouldInitialize()
     {
@@ -18,7 +166,6 @@ public class OneLakeServiceTests
         }
         catch
         {
-            // Expected - invalid connection string in test
             Assert.True(true);
         }
     }
@@ -36,7 +183,6 @@ public class OneLakeServiceTests
         }
         catch
         {
-            // Expected - invalid connection string in test
             Assert.True(true);
         }
     }

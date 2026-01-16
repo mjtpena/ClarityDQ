@@ -1,9 +1,11 @@
 using ClarityDQ.Api.Controllers;
 using ClarityDQ.Core.Entities;
 using ClarityDQ.Core.Interfaces;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Moq;
+using System.Security.Claims;
 
 namespace ClarityDQ.Tests.Controllers;
 
@@ -18,6 +20,12 @@ public class LineageControllerTests
         _lineageServiceMock = new Mock<ILineageService>();
         _loggerMock = new Mock<ILogger<LineageController>>();
         _controller = new LineageController(_lineageServiceMock.Object, _loggerMock.Object);
+        
+        var user = new ClaimsPrincipal(new ClaimsIdentity(new[] { new Claim(ClaimTypes.Name, "testuser") }, "mock"));
+        _controller.ControllerContext = new ControllerContext
+        {
+            HttpContext = new DefaultHttpContext { User = user }
+        };
     }
 
     [Fact]
