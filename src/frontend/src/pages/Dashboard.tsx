@@ -2,8 +2,11 @@ import { useState, useEffect } from 'react';
 import { useMsal } from '@azure/msal-react';
 import { Button, Input, Card, Text, TabList, Tab } from '@fluentui/react-components';
 import { useProfilingService } from '../services/profiling';
+import { useScheduleService } from '../services/schedules';
 import { DataProfile } from '../types/profile';
+import { Schedule } from '../types/schedule';
 import { RulesPage } from './rules/RulesPage';
+import { ScheduleList } from '../components/rules/ScheduleList';
 
 function Dashboard() {
   const { accounts, instance } = useMsal();
@@ -11,10 +14,12 @@ function Dashboard() {
   const [datasetName, setDatasetName] = useState('');
   const [tableName, setTableName] = useState('');
   const [profiles, setProfiles] = useState<DataProfile[]>([]);
+  const [schedules, setSchedules] = useState<Schedule[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedTab, setSelectedTab] = useState<string>('profiling');
 
   const { createProfile, getProfiles } = useProfilingService();
+  const { getSchedules, executeSchedule, deleteSchedule } = useScheduleService();
 
   const loadProfiles = async () => {
     try {
@@ -25,9 +30,20 @@ function Dashboard() {
     }
   };
 
+  const loadSchedules = async () => {
+    try {
+      const data = await getSchedules();
+      setSchedules(data);
+    } catch (error) {
+      console.error('Failed to load schedules:', error);
+    }
+  };
+
   useEffect(() => {
     if (selectedTab === 'profiling') {
       loadProfiles();
+    } else if (selectedTab === 'schedules') {
+      loadSchedules();
     }
   }, [workspaceId, selectedTab]);
 
@@ -44,6 +60,26 @@ function Dashboard() {
       console.error('Failed to create profile:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleExecuteSchedule = async (id: string) => {
+    try {
+      await executeSchedule(id);
+      alert('Schedule executed!');
+    } catch (error) {
+      console.error('Failed to execute:', error);
+    }
+  };
+
+  const handleDeleteSchedule = async (id: string) => {
+    if (confirm('Delete this schedule?')) {
+      try {
+        await deleteSchedule(id);
+        await loadSchedules();
+      } catch (error) {
+        console.error('Failed to delete:', error);
+      }
     }
   };
 
@@ -73,6 +109,7 @@ function Dashboard() {
       <TabList selectedValue={selectedTab} onTabSelect={(_, data) => setSelectedTab(data.value as string)}>
         <Tab value="profiling">Data Profiling</Tab>
         <Tab value="rules">Quality Rules</Tab>
+        <Tab value="schedules">Schedules</Tab>
       </TabList>
 
       <div style={{ marginTop: '24px' }}>
@@ -119,6 +156,20 @@ function Dashboard() {
         )}
         
         {selectedTab === 'rules' && <RulesPage workspaceId={workspaceId} />}
+        
+        {selectedTab === 'schedules' && (
+          <>
+            <div style={{ marginBottom: '20px' }}>
+              <Text as="h2" size={600}>Scheduled Jobs</Text>
+              <Text size={300}>{schedules.length} schedule(s) configured</Text>
+            </div>
+            <ScheduleList 
+              schedules={schedules}
+              onExecute={handleExecuteSchedule}
+              onDelete={handleDeleteSchedule}
+            />
+          </>
+        )}
       </div>
     </div>
   );
