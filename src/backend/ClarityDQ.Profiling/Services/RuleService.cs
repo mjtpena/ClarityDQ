@@ -1,6 +1,7 @@
 using ClarityDQ.Core.Entities;
 using ClarityDQ.Core.Interfaces;
 using ClarityDQ.Infrastructure.Data;
+using ClarityDQ.RuleEngine;
 using Microsoft.EntityFrameworkCore;
 using System.Diagnostics;
 
@@ -9,10 +10,14 @@ namespace ClarityDQ.Profiling.Services;
 public class RuleService : IRuleService
 {
     private readonly ClarityDbContext _context;
+    private readonly IRuleExecutor _ruleExecutor;
+    private readonly IRuleDataSource _dataSource;
 
-    public RuleService(ClarityDbContext context)
+    public RuleService(ClarityDbContext context, IRuleExecutor ruleExecutor, IRuleDataSource dataSource)
     {
         _context = context;
+        _ruleExecutor = ruleExecutor;
+        _dataSource = dataSource;
     }
 
     public async Task<Rule> CreateRuleAsync(Rule rule, CancellationToken cancellationToken = default)
@@ -113,26 +118,18 @@ public class RuleService : IRuleService
 
         try
         {
-            // Simulate rule execution
-            await Task.Delay(1000);
-
-            // Mock results based on rule type
-            long recordsChecked = 1000;
-            long recordsFailed = rule.Type switch
-            {
-                RuleType.Completeness => 50,
-                RuleType.Accuracy => 30,
-                RuleType.Consistency => 20,
-                RuleType.Uniqueness => 10,
-                RuleType.Validity => 40,
-                _ => 25
-            };
+            var result = await _ruleExecutor.ExecuteAsync(rule, _dataSource);
 
             execution.Status = RuleExecutionStatus.Completed;
-            execution.RecordsChecked = recordsChecked;
-            execution.RecordsPassed = recordsChecked - recordsFailed;
-            execution.RecordsFailed = recordsFailed;
-            execution.SuccessRate = (double)execution.RecordsPassed / recordsChecked * 100;
+            execution.RecordsChecked = result.RecordsChecked;
+            execution.RecordsPassed = result.RecordsPassed;
+            execution.RecordsFailed = result.RecordsFailed;
+            execution.SuccessRate = result.SuccessRate;
+            execution.ResultDetails = System.Text.Json.JsonSerializer.Serialize(new
+            {
+                Violations = result.Violations.Take(10),
+                Metrics = result.Metrics
+            });
             execution.DurationMs = (int)stopwatch.ElapsedMilliseconds;
 
             await _context.SaveChangesAsync();

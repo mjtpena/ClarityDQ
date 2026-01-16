@@ -26,6 +26,7 @@
     <ProjectReference Include="..\ClarityDQ.Infrastructure\ClarityDQ.Infrastructure.csproj" />
     <ProjectReference Include="..\ClarityDQ.Profiling\ClarityDQ.Profiling.csproj" />
     <ProjectReference Include="..\ClarityDQ.Lineage\ClarityDQ.Lineage.csproj" />
+    <ProjectReference Include="..\ClarityDQ.RuleEngine\ClarityDQ.RuleEngine.csproj" />
   </ItemGroup>
 
 </Project>

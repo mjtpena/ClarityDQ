@@ -2,12 +2,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\ClarityDQ.Core\ClarityDQ.Core.csproj" />
-    <ProjectReference Include="..\ClarityDQ.Infrastructure\ClarityDQ.Infrastructure.csproj" />
-    <ProjectReference Include="..\ClarityDQ.RuleEngine\ClarityDQ.RuleEngine.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Include="NCrontab" Version="3.4.0" />
   </ItemGroup>
 
   <PropertyGroup>

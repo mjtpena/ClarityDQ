@@ -2,6 +2,7 @@ using ClarityDQ.Core.Interfaces;
 using ClarityDQ.Infrastructure.Data;
 using ClarityDQ.Profiling.Services;
 using ClarityDQ.Lineage.Services;
+using ClarityDQ.RuleEngine;
 using ClarityDQ.Api.BackgroundJobs;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
@@ -41,6 +42,8 @@ builder.Services.AddScoped<IProfilingService, ProfilingService>();
 builder.Services.AddScoped<IRuleService, RuleService>();
 builder.Services.AddScoped<ISchedulingService, SchedulingService>();
 builder.Services.AddScoped<ILineageService, LineageService>();
+builder.Services.AddScoped<IRuleExecutor, RuleExecutor>();
+builder.Services.AddScoped<IRuleDataSource, MockRuleDataSource>();
 builder.Services.AddScoped<ScheduledJobProcessor>();
 
 builder.Services.AddControllers();
