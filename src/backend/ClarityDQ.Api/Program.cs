@@ -10,8 +10,33 @@ using Microsoft.Identity.Web;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Hangfire;
 using Hangfire.SqlServer;
+using Serilog;
+using Serilog.Events;
+
+Log.Logger = new LoggerConfiguration()
+    .MinimumLevel.Information()
+    .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
+    .MinimumLevel.Override("Microsoft.EntityFrameworkCore", LogEventLevel.Warning)
+    .Enrich.FromLogContext()
+    .Enrich.WithProperty("Application", "ClarityDQ")
+    .WriteTo.Console()
+    .CreateBootstrapLogger();
+
+try
+{
+    Log.Information("Starting ClarityDQ API");
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Host.UseSerilog((context, services, configuration) => configuration
+    .ReadFrom.Configuration(context.Configuration)
+    .ReadFrom.Services(services)
+    .Enrich.FromLogContext()
+    .Enrich.WithProperty("Application", "ClarityDQ")
+    .WriteTo.Console()
+    .WriteTo.ApplicationInsights(
+        context.Configuration["ApplicationInsights:ConnectionString"],
+        TelemetryConverter.Traces));
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddMicrosoftIdentityWebApi(builder.Configuration.GetSection("AzureAd"));
@@ -110,4 +135,22 @@ RecurringJob.AddOrUpdate<ScheduledJobProcessor>(
     processor => processor.ProcessDueSchedules(),
     "*/5 * * * *");
 
+app.UseSerilogRequestLogging(options =>
+{
+    options.EnrichDiagnosticContext = (diagnosticContext, httpContext) =>
+    {
+        diagnosticContext.Set("ClientIP", httpContext.Connection.RemoteIpAddress);
+        diagnosticContext.Set("UserAgent", httpContext.Request.Headers["User-Agent"].ToString());
+    };
+});
+
 app.Run();
+}
+catch (Exception ex)
+{
+    Log.Fatal(ex, "Application terminated unexpectedly");
+}
+finally
+{
+    Log.CloseAndFlush();
+}
