@@ -228,6 +228,154 @@ public class RuleExecutorTests
         };
 
         var result = await _executor.ExecuteAsync(rule, _dataSource);
-        result.RecordsFailed.Should().Be(0); // Should handle invalid expression gracefully
+        result.RecordsFailed.Should().Be(0);
+    }
+
+    [Fact]
+    public async Task ExecuteRule_WithCancellationToken()
+    {
+        var rule = new Rule
+        {
+            Type = RuleType.Completeness,
+            WorkspaceId = "ws",
+            DatasetName = "ds",
+            TableName = "t",
+            ColumnName = "Name"
+        };
+
+        var cts = new CancellationTokenSource();
+        var result = await _executor.ExecuteAsync(rule, _dataSource, cts.Token);
+        result.Should().NotBeNull();
+    }
+
+    [Fact]
+    public async Task ExecuteCompletenessRule_NoNullValues()
+    {
+        var rule = new Rule
+        {
+            Type = RuleType.Completeness,
+            WorkspaceId = "ws",
+            DatasetName = "ds",
+            TableName = "t",
+            ColumnName = "Id",
+            Threshold = 100.0
+        };
+
+        var result = await _executor.ExecuteAsync(rule, _dataSource);
+        result.RecordsFailed.Should().Be(0);
+        result.SuccessRate.Should().Be(100.0);
+    }
+
+    [Fact]
+    public async Task ExecuteValidityRule_DateRange()
+    {
+        var rule = new Rule
+        {
+            Type = RuleType.Validity,
+            WorkspaceId = "ws",
+            DatasetName = "ds",
+            TableName = "t",
+            ColumnName = "CreatedAt",
+            Expression = "daterange:2020-01-01,2025-12-31"
+        };
+
+        var result = await _executor.ExecuteAsync(rule, _dataSource);
+        result.RecordsChecked.Should().Be(100);
+    }
+
+    [Fact]
+    public async Task ExecuteRule_WithEmptyDataSource()
+    {
+        var emptyDataSource = new MockRuleDataSource();
+        var rule = new Rule
+        {
+            Type = RuleType.Completeness,
+            WorkspaceId = "ws",
+            DatasetName = "ds",
+            TableName = "empty",
+            ColumnName = "Name"
+        };
+
+        var result = await _executor.ExecuteAsync(rule, emptyDataSource);
+        result.RecordsChecked.Should().BeGreaterThanOrEqualTo(0);
+    }
+
+    [Fact]
+    public async Task ExecuteCustomRule_ComplexExpression()
+    {
+        var rule = new Rule
+        {
+            Type = RuleType.Custom,
+            WorkspaceId = "ws",
+            DatasetName = "ds",
+            TableName = "t",
+            Expression = "Score > 50 AND Status == 'Active'"
+        };
+
+        var result = await _executor.ExecuteAsync(rule, _dataSource);
+        result.Metrics.Should().ContainKey("CustomExpression");
+    }
+
+    [Fact]
+    public async Task ExecuteAccuracyRule_WithDecimalValues()
+    {
+        var rule = new Rule
+        {
+            Type = RuleType.Accuracy,
+            WorkspaceId = "ws",
+            DatasetName = "ds",
+            TableName = "t",
+            ColumnName = "Amount",
+            Threshold = 99.5
+        };
+
+        var result = await _executor.ExecuteAsync(rule, _dataSource);
+        result.Should().NotBeNull();
+        result.RecordsChecked.Should().BeGreaterThan(0);
+    }
+
+    [Fact]
+    public async Task ExecuteUniquenessRule_WithDuplicates()
+    {
+        var rule = new Rule
+        {
+            Type = RuleType.Uniqueness,
+            WorkspaceId = "ws",
+            DatasetName = "ds",
+            TableName = "t",
+            ColumnName = "Email"
+        };
+
+        var result = await _executor.ExecuteAsync(rule, _dataSource);
+        result.RecordsChecked.Should().BeGreaterThan(0);
+    }
+
+    [Fact]
+    public async Task ExecuteRule_AllRuleTypes()
+    {
+        var ruleTypes = new[] 
+        { 
+            RuleType.Completeness, 
+            RuleType.Uniqueness, 
+            RuleType.Validity, 
+            RuleType.Accuracy, 
+            RuleType.Consistency, 
+            RuleType.Custom 
+        };
+
+        foreach (var ruleType in ruleTypes)
+        {
+            var rule = new Rule
+            {
+                Type = ruleType,
+                WorkspaceId = "ws",
+                DatasetName = "ds",
+                TableName = "t",
+                ColumnName = "Id"
+            };
+
+            var result = await _executor.ExecuteAsync(rule, _dataSource);
+            result.Should().NotBeNull();
+        }
     }
 }
