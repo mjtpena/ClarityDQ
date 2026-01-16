@@ -145,4 +145,89 @@ public class RuleExecutorTests
         result.Violations.Should().NotBeEmpty();
         result.Violations.First().ViolationMessage.Should().Contain("null or empty");
     }
+
+    [Fact]
+    public async Task ExecuteAccuracyRule_WithDoubleValues()
+    {
+        var rule = new Rule
+        {
+            Type = RuleType.Accuracy,
+            WorkspaceId = "ws",
+            DatasetName = "ds",
+            TableName = "t",
+            ColumnName = "Score",
+            Threshold = 1000.0
+        };
+
+        var result = await _executor.ExecuteAsync(rule, _dataSource);
+        result.RecordsFailed.Should().Be(0); // All scores should be under 1000
+    }
+
+    [Fact]
+    public async Task ExecuteCompletenessRule_WithEntireRow()
+    {
+        var rule = new Rule
+        {
+            Type = RuleType.Completeness,
+            WorkspaceId = "ws",
+            DatasetName = "ds",
+            TableName = "t",
+            ColumnName = "", // Check entire row
+            Threshold = 50.0
+        };
+
+        var result = await _executor.ExecuteAsync(rule, _dataSource);
+        result.RecordsChecked.Should().Be(100);
+        result.Metrics.Should().ContainKey("CompletionRate");
+    }
+
+    [Fact]
+    public async Task ExecuteUniquenessRule_TracksMetrics()
+    {
+        var rule = new Rule
+        {
+            Type = RuleType.Uniqueness,
+            WorkspaceId = "ws",
+            DatasetName = "ds",
+            TableName = "t",
+            ColumnName = "Id"
+        };
+
+        var result = await _executor.ExecuteAsync(rule, _dataSource);
+        result.Metrics["UniqueCount"].Should().Be(100);
+        result.Metrics["DuplicateCount"].Should().Be(0);
+    }
+
+    [Fact]
+    public async Task ExecuteValidityRule_WithInList()
+    {
+        var rule = new Rule
+        {
+            Type = RuleType.Validity,
+            WorkspaceId = "ws",
+            DatasetName = "ds",
+            TableName = "t",
+            ColumnName = "Status",
+            Expression = "in:Active,Inactive"
+        };
+
+        var result = await _executor.ExecuteAsync(rule, _dataSource);
+        result.RecordsFailed.Should().Be(0); // All statuses should match
+    }
+
+    [Fact]
+    public async Task ExecuteConsistencyRule_InvalidExpression()
+    {
+        var rule = new Rule
+        {
+            Type = RuleType.Consistency,
+            WorkspaceId = "ws",
+            DatasetName = "ds",
+            TableName = "t",
+            Expression = "InvalidExpression"
+        };
+
+        var result = await _executor.ExecuteAsync(rule, _dataSource);
+        result.RecordsFailed.Should().Be(0); // Should handle invalid expression gracefully
+    }
 }
