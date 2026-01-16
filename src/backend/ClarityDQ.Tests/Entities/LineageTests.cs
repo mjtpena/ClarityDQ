@@ -167,6 +167,74 @@ public class LineageGraphTests
 
         Assert.Single(graph.Edges);
     }
+
+    [Fact]
+    public void LineageGraph_GetUpstreamNodes_ReturnsCorrectNodes()
+    {
+        var graph = new LineageGraph();
+        var node1 = new LineageNode { Id = Guid.NewGuid(), WorkspaceId = "ws", NodeName = "Source1" };
+        var node2 = new LineageNode { Id = Guid.NewGuid(), WorkspaceId = "ws", NodeName = "Source2" };
+        var node3 = new LineageNode { Id = Guid.NewGuid(), WorkspaceId = "ws", NodeName = "Target" };
+        
+        graph.AddNode(node1);
+        graph.AddNode(node2);
+        graph.AddNode(node3);
+        
+        graph.AddEdge(new LineageEdge { SourceNodeId = node1.Id, TargetNodeId = node3.Id, TransformationType = "T1" });
+        graph.AddEdge(new LineageEdge { SourceNodeId = node2.Id, TargetNodeId = node3.Id, TransformationType = "T2" });
+        
+        var upstreamNodes = graph.GetUpstreamNodes(node3.Id);
+        
+        Assert.Equal(2, upstreamNodes.Count);
+        Assert.Contains(node1, upstreamNodes);
+        Assert.Contains(node2, upstreamNodes);
+    }
+
+    [Fact]
+    public void LineageGraph_GetDownstreamNodes_ReturnsCorrectNodes()
+    {
+        var graph = new LineageGraph();
+        var node1 = new LineageNode { Id = Guid.NewGuid(), WorkspaceId = "ws", NodeName = "Source" };
+        var node2 = new LineageNode { Id = Guid.NewGuid(), WorkspaceId = "ws", NodeName = "Target1" };
+        var node3 = new LineageNode { Id = Guid.NewGuid(), WorkspaceId = "ws", NodeName = "Target2" };
+        
+        graph.AddNode(node1);
+        graph.AddNode(node2);
+        graph.AddNode(node3);
+        
+        graph.AddEdge(new LineageEdge { SourceNodeId = node1.Id, TargetNodeId = node2.Id, TransformationType = "T1" });
+        graph.AddEdge(new LineageEdge { SourceNodeId = node1.Id, TargetNodeId = node3.Id, TransformationType = "T2" });
+        
+        var downstreamNodes = graph.GetDownstreamNodes(node1.Id);
+        
+        Assert.Equal(2, downstreamNodes.Count);
+        Assert.Contains(node2, downstreamNodes);
+        Assert.Contains(node3, downstreamNodes);
+    }
+
+    [Fact]
+    public void LineageGraph_GetUpstreamNodes_WithNoUpstream_ReturnsEmpty()
+    {
+        var graph = new LineageGraph();
+        var node = new LineageNode { Id = Guid.NewGuid(), WorkspaceId = "ws", NodeName = "Source" };
+        graph.AddNode(node);
+        
+        var upstreamNodes = graph.GetUpstreamNodes(node.Id);
+        
+        Assert.Empty(upstreamNodes);
+    }
+
+    [Fact]
+    public void LineageGraph_GetDownstreamNodes_WithNoDownstream_ReturnsEmpty()
+    {
+        var graph = new LineageGraph();
+        var node = new LineageNode { Id = Guid.NewGuid(), WorkspaceId = "ws", NodeName = "Terminal" };
+        graph.AddNode(node);
+        
+        var downstreamNodes = graph.GetDownstreamNodes(node.Id);
+        
+        Assert.Empty(downstreamNodes);
+    }
 }
 
 public class ScheduleTests
@@ -275,5 +343,95 @@ public class ScheduleExecutionTests
         Assert.Equal(ScheduleExecutionStatus.Failed, execution.Status);
         Assert.Equal("Connection timeout", execution.ErrorMessage);
         Assert.NotNull(execution.CompletedAt);
+    }
+
+    [Fact]
+    public void Schedule_CanHaveRuleNavigation()
+    {
+        var rule = new Rule
+        {
+            Id = Guid.NewGuid(),
+            Name = "Test Rule",
+            Type = RuleType.Completeness
+        };
+
+        var schedule = new Schedule
+        {
+            Id = Guid.NewGuid(),
+            Name = "Rule Schedule",
+            Type = ScheduleType.RuleExecution,
+            RuleId = rule.Id,
+            Rule = rule,
+            CronExpression = "0 0 * * *"
+        };
+
+        Assert.NotNull(schedule.Rule);
+        Assert.Equal(rule.Id, schedule.RuleId);
+        Assert.Equal("Test Rule", schedule.Rule.Name);
+    }
+
+    [Fact]
+    public void ScheduleExecution_CanHaveScheduleNavigation()
+    {
+        var schedule = new Schedule
+        {
+            Id = Guid.NewGuid(),
+            Name = "Test Schedule",
+            Type = ScheduleType.DataProfiling,
+            CronExpression = "0 0 * * *"
+        };
+
+        var execution = new ScheduleExecution
+        {
+            Id = Guid.NewGuid(),
+            ScheduleId = schedule.Id,
+            Schedule = schedule,
+            StartedAt = DateTime.UtcNow,
+            Status = ScheduleExecutionStatus.Running
+        };
+
+        Assert.NotNull(execution.Schedule);
+        Assert.Equal(schedule.Id, execution.ScheduleId);
+        Assert.Equal("Test Schedule", execution.Schedule.Name);
+    }
+
+    [Fact]
+    public void Schedule_CanHaveLastAndNextRunDates()
+    {
+        var lastRun = DateTime.UtcNow.AddDays(-1);
+        var nextRun = DateTime.UtcNow.AddDays(1);
+
+        var schedule = new Schedule
+        {
+            Id = Guid.NewGuid(),
+            Name = "Recurring Schedule",
+            Type = ScheduleType.DataProfiling,
+            CronExpression = "0 0 * * *",
+            LastRunAt = lastRun,
+            NextRunAt = nextRun,
+            IsEnabled = true
+        };
+
+        Assert.Equal(lastRun, schedule.LastRunAt);
+        Assert.Equal(nextRun, schedule.NextRunAt);
+        Assert.True(schedule.IsEnabled);
+    }
+
+    [Fact]
+    public void ScheduleExecution_CompletedHasResultSummary()
+    {
+        var execution = new ScheduleExecution
+        {
+            Id = Guid.NewGuid(),
+            ScheduleId = Guid.NewGuid(),
+            StartedAt = DateTime.UtcNow,
+            CompletedAt = DateTime.UtcNow.AddMinutes(10),
+            Status = ScheduleExecutionStatus.Completed,
+            ResultSummary = "Processed 1000 records successfully"
+        };
+
+        Assert.Equal(ScheduleExecutionStatus.Completed, execution.Status);
+        Assert.NotNull(execution.ResultSummary);
+        Assert.Contains("1000 records", execution.ResultSummary);
     }
 }
