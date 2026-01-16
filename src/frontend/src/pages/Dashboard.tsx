@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useMsal } from '@azure/msal-react';
-import { Button, Input, Card, Text } from '@fluentui/react-components';
+import { Button, Input, Card, Text, TabList, Tab } from '@fluentui/react-components';
 import { useProfilingService } from '../services/profiling';
 import { DataProfile } from '../types/profile';
+import { RulesPage } from './rules/RulesPage';
 
 function Dashboard() {
   const { accounts, instance } = useMsal();
@@ -11,6 +12,7 @@ function Dashboard() {
   const [tableName, setTableName] = useState('');
   const [profiles, setProfiles] = useState<DataProfile[]>([]);
   const [loading, setLoading] = useState(false);
+  const [selectedTab, setSelectedTab] = useState<string>('profiling');
 
   const { createProfile, getProfiles } = useProfilingService();
 
@@ -24,8 +26,10 @@ function Dashboard() {
   };
 
   useEffect(() => {
-    loadProfiles();
-  }, [workspaceId]);
+    if (selectedTab === 'profiling') {
+      loadProfiles();
+    }
+  }, [workspaceId, selectedTab]);
 
   const handleProfile = async () => {
     if (!datasetName || !tableName) return;
@@ -57,47 +61,64 @@ function Dashboard() {
         <Button onClick={handleLogout}>Sign Out</Button>
       </div>
 
-      <Card style={{ padding: '20px', marginBottom: '20px' }}>
-        <h2>Create Data Profile</h2>
-        <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
-          <Input 
-            placeholder="Workspace ID" 
-            value={workspaceId}
-            onChange={(e) => setWorkspaceId(e.target.value)}
-          />
-          <Input 
-            placeholder="Dataset Name" 
-            value={datasetName}
-            onChange={(e) => setDatasetName(e.target.value)}
-          />
-          <Input 
-            placeholder="Table Name" 
-            value={tableName}
-            onChange={(e) => setTableName(e.target.value)}
-          />
-          <Button 
-            appearance="primary" 
-            onClick={handleProfile}
-            disabled={loading || !datasetName || !tableName}
-          >
-            {loading ? 'Profiling...' : 'Profile Table'}
-          </Button>
-        </div>
-      </Card>
+      <div style={{ marginBottom: '20px' }}>
+        <Input 
+          placeholder="Workspace ID" 
+          value={workspaceId}
+          onChange={(e) => setWorkspaceId(e.target.value)}
+          style={{ maxWidth: '300px' }}
+        />
+      </div>
 
-      <h2>Recent Profiles</h2>
-      <div style={{ display: 'grid', gap: '10px' }}>
-        {profiles.map((profile) => (
-          <Card key={profile.id} style={{ padding: '15px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <div>
-                <Text weight="bold">{profile.datasetName}.{profile.tableName}</Text>
-                <Text size={200}> - {profile.rowCount.toLocaleString()} rows</Text>
+      <TabList selectedValue={selectedTab} onTabSelect={(_, data) => setSelectedTab(data.value as string)}>
+        <Tab value="profiling">Data Profiling</Tab>
+        <Tab value="rules">Quality Rules</Tab>
+      </TabList>
+
+      <div style={{ marginTop: '24px' }}>
+        {selectedTab === 'profiling' && (
+          <>
+            <Card style={{ padding: '20px', marginBottom: '20px' }}>
+              <h2>Create Data Profile</h2>
+              <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
+                <Input 
+                  placeholder="Dataset Name" 
+                  value={datasetName}
+                  onChange={(e) => setDatasetName(e.target.value)}
+                />
+                <Input 
+                  placeholder="Table Name" 
+                  value={tableName}
+                  onChange={(e) => setTableName(e.target.value)}
+                />
+                <Button 
+                  appearance="primary" 
+                  onClick={handleProfile}
+                  disabled={loading || !datasetName || !tableName}
+                >
+                  {loading ? 'Profiling...' : 'Profile Table'}
+                </Button>
               </div>
-              <Text size={200}>{new Date(profile.profiledAt).toLocaleString()}</Text>
+            </Card>
+
+            <h2>Recent Profiles</h2>
+            <div style={{ display: 'grid', gap: '10px' }}>
+              {profiles.map((profile) => (
+                <Card key={profile.id} style={{ padding: '15px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <div>
+                      <Text weight="bold">{profile.datasetName}.{profile.tableName}</Text>
+                      <Text size={200}> - {profile.rowCount.toLocaleString()} rows</Text>
+                    </div>
+                    <Text size={200}>{new Date(profile.profiledAt).toLocaleString()}</Text>
+                  </div>
+                </Card>
+              ))}
             </div>
-          </Card>
-        ))}
+          </>
+        )}
+        
+        {selectedTab === 'rules' && <RulesPage workspaceId={workspaceId} />}
       </div>
     </div>
   );
