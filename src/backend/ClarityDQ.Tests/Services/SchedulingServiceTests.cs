@@ -261,4 +261,122 @@ public class SchedulingServiceTests : IDisposable
 
         Assert.Equal(20, result.Count);
     }
+
+    [Fact]
+    public async Task ExecuteScheduleAsync_WithRuleExecution_CompletesSuccessfully()
+    {
+        var rule = new Rule
+        {
+            Id = Guid.NewGuid(),
+            Name = "Test Rule",
+            Type = RuleType.Completeness,
+            CreatedAt = DateTime.UtcNow,
+            CreatedBy = "test"
+        };
+        var schedule = new Schedule
+        {
+            Id = Guid.NewGuid(),
+            Name = "Test Schedule",
+            Type = ScheduleType.RuleExecution,
+            RuleId = rule.Id,
+            CronExpression = "0 0 * * *",
+            CreatedAt = DateTime.UtcNow,
+            IsEnabled = true
+        };
+        _context.Rules.Add(rule);
+        _context.Schedules.Add(schedule);
+        await _context.SaveChangesAsync();
+
+        _ruleServiceMock
+            .Setup(s => s.ExecuteRuleAsync(rule.Id, default))
+            .ReturnsAsync(new RuleExecution());
+
+        var result = await _service.ExecuteScheduleAsync(schedule.Id);
+        
+        await Task.Delay(500);
+        
+        _ruleServiceMock.Verify(s => s.ExecuteRuleAsync(rule.Id, default), Times.Once);
+    }
+
+    [Fact]
+    public async Task ExecuteScheduleAsync_WithDataProfiling_CompletesSuccessfully()
+    {
+        var schedule = new Schedule
+        {
+            Id = Guid.NewGuid(),
+            Name = "Profiling Schedule",
+            Type = ScheduleType.DataProfiling,
+            WorkspaceId = "workspace123",
+            DatasetName = "dataset",
+            TableName = "table",
+            CronExpression = "0 0 * * *",
+            CreatedAt = DateTime.UtcNow,
+            IsEnabled = true
+        };
+        _context.Schedules.Add(schedule);
+        await _context.SaveChangesAsync();
+
+        _profilingServiceMock
+            .Setup(s => s.ProfileTableAsync("workspace123", "dataset", "table", default))
+            .ReturnsAsync(Guid.NewGuid());
+
+        var result = await _service.ExecuteScheduleAsync(schedule.Id);
+        
+        await Task.Delay(500);
+        
+        _profilingServiceMock.Verify(s => s.ProfileTableAsync("workspace123", "dataset", "table", default), Times.Once);
+    }
+
+    [Fact]
+    public async Task CreateScheduleAsync_WithInvalidCron_SetsNextRunToNull()
+    {
+        var schedule = new Schedule
+        {
+            Name = "Invalid Cron",
+            Type = ScheduleType.RuleExecution,
+            CronExpression = "invalid cron",
+            IsEnabled = true
+        };
+
+        var result = await _service.CreateScheduleAsync(schedule);
+
+        Assert.Null(result.NextRunAt);
+    }
+
+    [Fact]
+    public async Task CreateScheduleAsync_WithValidCron_CalculatesNextRun()
+    {
+        var schedule = new Schedule
+        {
+            Name = "Valid Cron",
+            Type = ScheduleType.RuleExecution,
+            CronExpression = "0 0 * * *",
+            IsEnabled = true
+        };
+
+        var result = await _service.CreateScheduleAsync(schedule);
+
+        Assert.NotNull(result.NextRunAt);
+        Assert.True(result.NextRunAt > DateTime.UtcNow);
+    }
+
+    [Fact]
+    public async Task UpdateScheduleAsync_RecalculatesNextRun()
+    {
+        var schedule = new Schedule
+        {
+            Id = Guid.NewGuid(),
+            Name = "Schedule",
+            CronExpression = "0 0 * * *",
+            CreatedAt = DateTime.UtcNow,
+            IsEnabled = true
+        };
+        _context.Schedules.Add(schedule);
+        await _context.SaveChangesAsync();
+
+        schedule.CronExpression = "0 12 * * *";
+        var result = await _service.UpdateScheduleAsync(schedule);
+
+        Assert.NotNull(result.NextRunAt);
+    }
 }

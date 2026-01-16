@@ -29,6 +29,7 @@
   <ItemGroup>
     <ProjectReference Include="..\ClarityDQ.Api\ClarityDQ.Api.csproj" />
     <ProjectReference Include="..\ClarityDQ.Core\ClarityDQ.Core.csproj" />
+    <ProjectReference Include="..\ClarityDQ.FabricClient\ClarityDQ.FabricClient.csproj" />
     <ProjectReference Include="..\ClarityDQ.Profiling\ClarityDQ.Profiling.csproj" />
     <ProjectReference Include="..\ClarityDQ.RuleEngine\ClarityDQ.RuleEngine.csproj" />
     <ProjectReference Include="..\ClarityDQ.OneLake\ClarityDQ.OneLake.csproj" />
