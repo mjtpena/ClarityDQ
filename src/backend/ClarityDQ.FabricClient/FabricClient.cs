@@ -15,14 +15,19 @@ public interface IFabricClient
 public class FabricClient : IFabricClient
 {
     private readonly HttpClient _httpClient;
-    private readonly TokenCredential _credential;
+    private readonly TokenCredential? _credential;
     private readonly FabricClientOptions _options;
 
     public FabricClient(HttpClient httpClient, FabricClientOptions options)
+        : this(httpClient, options, null)
+    {
+    }
+
+    internal FabricClient(HttpClient httpClient, FabricClientOptions options, TokenCredential? credential)
     {
         _httpClient = httpClient;
         _options = options;
-        _credential = new ClientSecretCredential(
+        _credential = credential ?? new ClientSecretCredential(
             options.TenantId,
             options.ClientId,
             options.ClientSecret);
@@ -74,6 +79,11 @@ public class FabricClient : IFabricClient
 
     private async Task EnsureAuthenticatedAsync(CancellationToken cancellationToken)
     {
+        if (_credential == null)
+        {
+            throw new InvalidOperationException("TokenCredential is not configured");
+        }
+
         var token = await _credential.GetTokenAsync(
             new TokenRequestContext(new[] { "https://api.fabric.microsoft.com/.default" }),
             cancellationToken);

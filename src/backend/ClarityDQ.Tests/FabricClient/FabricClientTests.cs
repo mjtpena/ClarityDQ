@@ -194,7 +194,6 @@ public class FabricClientTests
     [Fact]
     public async Task GetWorkspacesAsync_ReturnsWorkspaces()
     {
-        var mockHandler = new Mock<HttpMessageHandler>();
         var workspaces = new FabricWorkspacesResponse
         {
             Value = new[]
@@ -204,6 +203,7 @@ public class FabricClientTests
             }
         };
 
+        var mockHandler = new Mock<HttpMessageHandler>();
         mockHandler.Protected()
             .Setup<Task<HttpResponseMessage>>(
                 "SendAsync",
@@ -215,7 +215,7 @@ public class FabricClientTests
                 Content = new StringContent(JsonSerializer.Serialize(workspaces))
             });
 
-        var httpClient = new HttpClient(mockHandler.Object);
+        var httpClient = new HttpClient(mockHandler.Object) { BaseAddress = new Uri("https://api.fabric.microsoft.com/v1/") };
         var options = new FabricClientOptions
         {
             TenantId = "test-tenant",
@@ -223,16 +223,17 @@ public class FabricClientTests
             ClientSecret = "test-secret"
         };
 
-        try
-        {
-            var client = new ClarityDQ.FabricClient.FabricClient(httpClient, options);
-            var result = await client.GetWorkspacesAsync();
-            Assert.NotNull(result);
-        }
-        catch
-        {
-            Assert.True(true);
-        }
+        var mockCredential = new Mock<Azure.Core.TokenCredential>();
+        mockCredential
+            .Setup(c => c.GetTokenAsync(It.IsAny<Azure.Core.TokenRequestContext>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Azure.Core.AccessToken("mock-token", DateTimeOffset.UtcNow.AddHours(1)));
+
+        var client = new ClarityDQ.FabricClient.FabricClient(httpClient, options, mockCredential.Object);
+        var result = await client.GetWorkspacesAsync();
+        
+        Assert.NotNull(result);
+        Assert.Equal(2, result.Length);
+        Assert.Equal("ws1", result[0].Id);
     }
 
     [Fact]
@@ -259,7 +260,7 @@ public class FabricClientTests
                 Content = new StringContent(JsonSerializer.Serialize(items))
             });
 
-        var httpClient = new HttpClient(mockHandler.Object);
+        var httpClient = new HttpClient(mockHandler.Object) { BaseAddress = new Uri("https://api.fabric.microsoft.com/v1/") };
         var options = new FabricClientOptions
         {
             TenantId = "test-tenant",
@@ -267,16 +268,16 @@ public class FabricClientTests
             ClientSecret = "test-secret"
         };
 
-        try
-        {
-            var client = new ClarityDQ.FabricClient.FabricClient(httpClient, options);
-            var result = await client.GetWorkspaceItemsAsync("ws1");
-            Assert.NotNull(result);
-        }
-        catch
-        {
-            Assert.True(true);
-        }
+        var mockCredential = new Mock<Azure.Core.TokenCredential>();
+        mockCredential
+            .Setup(c => c.GetTokenAsync(It.IsAny<Azure.Core.TokenRequestContext>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Azure.Core.AccessToken("mock-token", DateTimeOffset.UtcNow.AddHours(1)));
+
+        var client = new ClarityDQ.FabricClient.FabricClient(httpClient, options, mockCredential.Object);
+        var result = await client.GetWorkspaceItemsAsync("ws1");
+        
+        Assert.NotNull(result);
+        Assert.Equal(2, result.Length);
     }
 
     [Fact]
@@ -304,7 +305,7 @@ public class FabricClientTests
                 Content = new StringContent(JsonSerializer.Serialize(schema))
             });
 
-        var httpClient = new HttpClient(mockHandler.Object);
+        var httpClient = new HttpClient(mockHandler.Object) { BaseAddress = new Uri("https://api.fabric.microsoft.com/v1/") };
         var options = new FabricClientOptions
         {
             TenantId = "test-tenant",
@@ -312,16 +313,16 @@ public class FabricClientTests
             ClientSecret = "test-secret"
         };
 
-        try
-        {
-            var client = new ClarityDQ.FabricClient.FabricClient(httpClient, options);
-            var result = await client.GetTableSchemaAsync("ws1", "lh1", "TestTable");
-            Assert.NotNull(result);
-        }
-        catch
-        {
-            Assert.True(true);
-        }
+        var mockCredential = new Mock<Azure.Core.TokenCredential>();
+        mockCredential
+            .Setup(c => c.GetTokenAsync(It.IsAny<Azure.Core.TokenRequestContext>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Azure.Core.AccessToken("mock-token", DateTimeOffset.UtcNow.AddHours(1)));
+
+        var client = new ClarityDQ.FabricClient.FabricClient(httpClient, options, mockCredential.Object);
+        var result = await client.GetTableSchemaAsync("ws1", "lh1", "TestTable");
+        
+        Assert.NotNull(result);
+        Assert.Equal("TestTable", result.Name);
     }
 
     [Fact]
