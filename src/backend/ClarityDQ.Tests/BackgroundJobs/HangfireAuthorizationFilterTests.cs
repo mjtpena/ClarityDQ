@@ -70,4 +70,47 @@ public class HangfireAuthorizationFilterTests
                    httpContext.Request.Host.Host == "localhost";
         }
     }
+
+    [Fact]
+    public void Authorize_ReturnsFalse_WhenUserIsNull()
+    {
+        var filter = new TestableHangfireAuthorizationFilter();
+        
+        var httpContext = new DefaultHttpContext();
+        httpContext.User = null!;
+        httpContext.Request.Host = new HostString("example.com");
+        
+        var result = filter.TestAuthorize(httpContext);
+
+        Assert.False(result);
+    }
+
+    [Fact]
+    public void Authorize_ReturnsTrue_WhenLocalhostWithPort()
+    {
+        var filter = new TestableHangfireAuthorizationFilter();
+        
+        var httpContext = new DefaultHttpContext();
+        httpContext.User = new ClaimsPrincipal();
+        httpContext.Request.Host = new HostString("localhost", 5000);
+        
+        var result = filter.TestAuthorize(httpContext);
+
+        Assert.True(result);
+    }
+
+    [Fact]
+    public void Authorize_WithAuthenticatedUser_IgnoresHostName()
+    {
+        var filter = new TestableHangfireAuthorizationFilter();
+        
+        var httpContext = new DefaultHttpContext();
+        var identity = new ClaimsIdentity(authenticationType: "Bearer");
+        httpContext.User = new ClaimsPrincipal(identity);
+        httpContext.Request.Host = new HostString("remote-server.com");
+        
+        var result = filter.TestAuthorize(httpContext);
+
+        Assert.True(result);
+    }
 }
